@@ -23,10 +23,8 @@ import javax.xml.bind.DatatypeConverter
 
 import scala.collection.JavaConverters._
 import scala.collection.mutable.ArrayBuffer
-
 import org.antlr.v4.runtime.{ParserRuleContext, Token}
 import org.antlr.v4.runtime.tree.{ParseTree, RuleNode, TerminalNode}
-
 import org.apache.spark.internal.Logging
 import org.apache.spark.sql.AnalysisException
 import org.apache.spark.sql.catalyst.{FunctionIdentifier, TableIdentifier}
@@ -41,6 +39,8 @@ import org.apache.spark.sql.types._
 import org.apache.spark.unsafe.types.CalendarInterval
 import org.apache.spark.util.random.RandomSampler
 
+import scala.collection.mutable
+
 /**
  * The AstBuilder converts an ANTLR4 ParseTree into a catalyst Expression, LogicalPlan or
  * TableIdentifier.
@@ -49,6 +49,9 @@ class AstBuilder(conf: SQLConf) extends SqlBaseBaseVisitor[AnyRef] with Logging 
   import ParserUtils._
 
   def this() = this(new SQLConf())
+
+  val schemaTables = mutable.HashMap[String, mutable.ArrayBuffer[String]]()
+  val noSchemaTables = mutable.ArrayBuffer[String]()
 
   protected def typedVisit[T](ctx: ParseTree): T = {
     ctx.accept(this).asInstanceOf[T]
@@ -68,6 +71,8 @@ class AstBuilder(conf: SQLConf) extends SqlBaseBaseVisitor[AnyRef] with Logging 
   }
 
   override def visitSingleStatement(ctx: SingleStatementContext): LogicalPlan = withOrigin(ctx) {
+    schemaTables.clear()
+    noSchemaTables.clear()
     visit(ctx.statement).asInstanceOf[LogicalPlan]
   }
 
@@ -772,6 +777,16 @@ class AstBuilder(conf: SQLConf) extends SqlBaseBaseVisitor[AnyRef] with Logging 
    */
   override def visitTableIdentifier(
       ctx: TableIdentifierContext): TableIdentifier = withOrigin(ctx) {
+    if (!ctx.db.isEmpty) {
+      // if db is not empty
+      if (schemaTables.get(ctx.db.getText).isEmpty) {
+        schemaTables.put(ctx.db.getText, mutable.ArrayBuffer[String]())
+      }
+      schemaTables(ctx.db.getText) += ctx.table.getText
+    } else {
+      // db is empty just put into
+      noSchemaTables += ctx.table.getText
+    }
     TableIdentifier(ctx.table.getText, Option(ctx.db).map(_.getText))
   }
 

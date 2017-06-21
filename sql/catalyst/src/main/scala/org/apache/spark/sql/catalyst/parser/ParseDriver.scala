@@ -19,7 +19,6 @@ package org.apache.spark.sql.catalyst.parser
 import org.antlr.v4.runtime._
 import org.antlr.v4.runtime.atn.PredictionMode
 import org.antlr.v4.runtime.misc.ParseCancellationException
-
 import org.apache.spark.internal.Logging
 import org.apache.spark.sql.AnalysisException
 import org.apache.spark.sql.catalyst.{FunctionIdentifier, TableIdentifier}
@@ -28,6 +27,8 @@ import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
 import org.apache.spark.sql.catalyst.trees.Origin
 import org.apache.spark.sql.internal.SQLConf
 import org.apache.spark.sql.types.{DataType, StructType}
+
+import scala.collection.mutable
 
 /**
  * Base SQL parsing infrastructure.
@@ -76,6 +77,9 @@ abstract class AbstractSqlParser extends ParserInterface with Logging {
 
   /** Get the builder (visitor) which converts a ParseTree into an AST. */
   protected def astBuilder: AstBuilder
+
+  def tableSchema :mutable.HashMap[String, mutable.ArrayBuffer[String]] = astBuilder.schemaTables
+  def noTableSchema :mutable.ArrayBuffer[String] = astBuilder.noSchemaTables
 
   protected def parse[T](command: String)(toResult: SqlBaseParser => T): T = {
     logInfo(s"Parsing command: $command")

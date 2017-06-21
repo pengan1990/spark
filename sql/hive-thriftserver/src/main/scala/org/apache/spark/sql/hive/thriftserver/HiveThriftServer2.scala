@@ -20,15 +20,15 @@ package org.apache.spark.sql.hive.thriftserver
 import java.util.Locale
 import java.util.concurrent.atomic.AtomicBoolean
 
+import com.jd.unibase.auth.client.AuthHttpClient
+
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
-
 import org.apache.commons.logging.LogFactory
 import org.apache.hadoop.hive.conf.HiveConf
 import org.apache.hadoop.hive.conf.HiveConf.ConfVars
 import org.apache.hive.service.cli.thrift.{ThriftBinaryCLIService, ThriftHttpCLIService}
 import org.apache.hive.service.server.HiveServer2
-
 import org.apache.spark.SparkContext
 import org.apache.spark.annotation.DeveloperApi
 import org.apache.spark.internal.Logging
@@ -63,6 +63,7 @@ object HiveThriftServer2 extends Logging {
 
     server.init(executionHive.conf)
     server.start()
+    AuthHttpClient.init()
     listener = new HiveThriftServer2Listener(server, sqlContext.conf)
     sqlContext.sparkContext.addSparkListener(listener)
     uiTab = if (sqlContext.sparkContext.getConf.getBoolean("spark.ui.enabled", true)) {

@@ -20,13 +20,13 @@ package org.apache.spark.sql
 import java.io.CharArrayWriter
 import java.sql.{Date, Timestamp}
 
+import com.jd.unibase.auth.client.AuthHttpClient
+
 import scala.collection.JavaConverters._
 import scala.language.implicitConversions
 import scala.reflect.runtime.universe.TypeTag
 import scala.util.control.NonFatal
-
 import org.apache.commons.lang3.StringUtils
-
 import org.apache.spark.annotation.{DeveloperApi, Experimental, InterfaceStability}
 import org.apache.spark.api.java.JavaRDD
 import org.apache.spark.api.java.function._
@@ -35,17 +35,17 @@ import org.apache.spark.broadcast.Broadcast
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.catalyst._
 import org.apache.spark.sql.catalyst.analysis._
-import org.apache.spark.sql.catalyst.catalog.CatalogRelation
+import org.apache.spark.sql.catalyst.catalog.{CatalogRelation, SessionCatalog}
 import org.apache.spark.sql.catalyst.encoders._
 import org.apache.spark.sql.catalyst.expressions._
 import org.apache.spark.sql.catalyst.expressions.aggregate._
-import org.apache.spark.sql.catalyst.json.{JacksonGenerator, JSONOptions}
+import org.apache.spark.sql.catalyst.json.{JSONOptions, JacksonGenerator}
 import org.apache.spark.sql.catalyst.optimizer.CombineUnions
-import org.apache.spark.sql.catalyst.parser.ParseException
+import org.apache.spark.sql.catalyst.parser.{AbstractSqlParser, ParseException}
 import org.apache.spark.sql.catalyst.plans._
 import org.apache.spark.sql.catalyst.plans.logical._
 import org.apache.spark.sql.catalyst.plans.physical.{Partitioning, PartitioningCollection}
-import org.apache.spark.sql.catalyst.util.{usePrettyExpression, DateTimeUtils}
+import org.apache.spark.sql.catalyst.util.{DateTimeUtils, usePrettyExpression}
 import org.apache.spark.sql.execution._
 import org.apache.spark.sql.execution.command._
 import org.apache.spark.sql.execution.datasources.LogicalRelation
@@ -62,10 +62,49 @@ private[sql] object Dataset {
   }
 
   def ofRows(sparkSession: SparkSession, logicalPlan: LogicalPlan): DataFrame = {
+    auth(sparkSession)
     val qe = sparkSession.sessionState.executePlan(logicalPlan)
     qe.assertAnalyzed()
     new Dataset[Row](sparkSession, qe, RowEncoder(qe.analyzed.schema))
   }
+
+
+  /**
+    * user db tables access check
+    *
+    * @param sparkSession
+    */
+  def auth(sparkSession: SparkSession): Unit = {
+    /**
+      * 获取当前库信息
+      */
+    val currDb = sparkSession.sessionState.catalog.getCurrentDatabase
+    /**
+      * 非DEFAULT 库 才有权限控制{因为thriftCliServer默认采用default 库}
+      */
+    val schemaTables = sparkSession.sessionState.sqlParser.asInstanceOf[AbstractSqlParser].tableSchema
+    val noSchemaTables = sparkSession.sessionState.sqlParser.asInstanceOf[AbstractSqlParser].noTableSchema
+    val schemas = new java.util.LinkedHashMap[String, java.util.List[String]]
+
+    schemaTables.foreach( f => {
+      val tables:java.util.List[String] = f._2.asJava
+      schemas.put(f._1, tables)
+    })
+
+    if (noSchemaTables.nonEmpty) {
+      // 当前逻辑库不为空　并且 不带库名表内容也不为空 不用考虑sql 之间的逻辑关系 {没有use db 直接show tables}
+      val noTbs:java.util.List[String] = noSchemaTables.asJava
+      if (schemas.get(currDb) == null) {
+        schemas.put(currDb, noTbs)
+      } else {
+        schemas.get(currDb).addAll(noTbs)
+      }
+    }
+    // password is ""
+    AuthHttpClient.auth(sparkSession.conf.get(sparkSession.sqlContext.SPARK_SQL_HIVE_USER),
+      sparkSession.conf.get(sparkSession.sqlContext.SPARK_SQL_HIVE_PASSWORD), schemas)
+  }
+
 }
 
 /**

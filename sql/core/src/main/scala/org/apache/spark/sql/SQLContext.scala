@@ -62,6 +62,10 @@ class SQLContext private[sql](val sparkSession: SparkSession)
 
   sparkSession.sparkContext.assertNotStopped()
 
+  // spark sql hive user
+  val SPARK_SQL_HIVE_USER: String = "spark.sql.hive.user"
+  val SPARK_SQL_HIVE_PASSWORD : String = "spark.sql.hive.password"
+
   // Note: Since Spark 2.0 this class has become a wrapper of SparkSession, where the
   // real functionality resides. This class remains mainly for backward compatibility.
 

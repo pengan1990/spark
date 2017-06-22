@@ -35,24 +35,29 @@ public class AuthHttpClient {
     private static final String CODE = "code";
     private static final int SUCCESS = 0;
 
-    private static String authUrl = "http://127.0.0.1:5741/auth/verify/";
-    private static String showDatabaseUrl = "http://127.0.0.1:5741/auth/show/databases/";
-    private static String showTablesUrl = "http://127.0.0.1:5741/auth/show/tables/";
-    private static String showColumnsUrl = "http://127.0.0.1:5741/auth/show/columns/";
+    private static final String DEFAULT_AUTH_URL = "http://127.0.0.1:5741/auth/verify/";
+    private static final String DEFAULT_SHOW_DATABASES_URL = "http://127.0.0.1:5741/auth/show/databases/";
+    private static final String DEFAULT_SHOW_TABLES_URL = "http://127.0.0.1:5741/auth/show/tables/";
+    private static final String DEFAULT_SHOW_COLUMNS_URL = "http://127.0.0.1:5741/auth/show/columns/";
+
+    private static String authUrl;
+    private static String showDatabaseUrl;
+    private static String showTablesUrl;
+    private static String showColumnsUrl;
 
     public static void init() {
-        InputStream inputStream = AuthHttpClient.class.getResourceAsStream("conf/auth.properties");
+        InputStream inputStream = AuthHttpClient.class.getResourceAsStream("/auth.properties");
         Properties properties = new Properties();
         try {
             properties.load(inputStream);
             authUrl = properties.getProperty("spark.thrift.server.auth.url",
-                    authUrl).trim();
+                    DEFAULT_AUTH_URL).trim();
             showDatabaseUrl = properties.getProperty("spark.thrift.server.auth.show.databases.url",
-                    showDatabaseUrl).trim();
+                    DEFAULT_SHOW_DATABASES_URL).trim();
             showTablesUrl = properties.getProperty("spark.thrift.server.auth.show.tables.url",
-                    showTablesUrl).trim();
+                    DEFAULT_SHOW_TABLES_URL).trim();
             showColumnsUrl = properties.getProperty("spark.thrift.server.auth.show.columns.url",
-                    showColumnsUrl).trim();
+                    DEFAULT_SHOW_COLUMNS_URL).trim();
 
         } catch (IOException e) {
             logger.error("load input stream error : " + e.getLocalizedMessage());

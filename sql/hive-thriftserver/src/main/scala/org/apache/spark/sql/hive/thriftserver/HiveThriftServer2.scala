@@ -61,7 +61,6 @@ object HiveThriftServer2 extends Logging {
       sqlContext.sparkContext.conf,
       sqlContext.sessionState.newHadoopConf())
 
-    AuthHttpClient.init()
     server.init(executionHive.conf)
     server.start()
     listener = new HiveThriftServer2Listener(server, sqlContext.conf)
@@ -93,6 +92,7 @@ object HiveThriftServer2 extends Logging {
     try {
       val server = new HiveThriftServer2(SparkSQLEnv.sqlContext)
       server.init(executionHive.conf)
+      AuthHttpClient.init()
       server.start()
       logInfo("HiveThriftServer2 started")
       listener = new HiveThriftServer2Listener(server, SparkSQLEnv.sqlContext.conf)

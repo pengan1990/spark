@@ -61,9 +61,9 @@ object HiveThriftServer2 extends Logging {
       sqlContext.sparkContext.conf,
       sqlContext.sessionState.newHadoopConf())
 
+    AuthHttpClient.init()
     server.init(executionHive.conf)
     server.start()
-    AuthHttpClient.init()
     listener = new HiveThriftServer2Listener(server, sqlContext.conf)
     sqlContext.sparkContext.addSparkListener(listener)
     uiTab = if (sqlContext.sparkContext.getConf.getBoolean("spark.ui.enabled", true)) {

@@ -52,12 +52,16 @@ public class AuthHttpClient {
             properties.load(inputStream);
             authUrl = properties.getProperty("spark.thrift.server.auth.url",
                     DEFAULT_AUTH_URL).trim();
+            logger.info("auth url [" + authUrl + "]");
             showDatabaseUrl = properties.getProperty("spark.thrift.server.auth.show.databases.url",
                     DEFAULT_SHOW_DATABASES_URL).trim();
+            logger.info("show database url [" + showDatabaseUrl + "]");
             showTablesUrl = properties.getProperty("spark.thrift.server.auth.show.tables.url",
                     DEFAULT_SHOW_TABLES_URL).trim();
+            logger.info("show tables url [" + showTablesUrl + "]");
             showColumnsUrl = properties.getProperty("spark.thrift.server.auth.show.columns.url",
                     DEFAULT_SHOW_COLUMNS_URL).trim();
+            logger.info("show columns url [" + showColumnsUrl + "]");
 
         } catch (IOException e) {
             logger.error("load input stream error : " + e.getLocalizedMessage());

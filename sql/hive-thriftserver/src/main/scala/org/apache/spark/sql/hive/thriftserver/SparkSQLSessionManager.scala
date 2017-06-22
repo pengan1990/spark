@@ -19,6 +19,7 @@ package org.apache.spark.sql.hive.thriftserver
 
 import java.util.concurrent.Executors
 
+import com.jd.unibase.auth.exception.AuthException
 import org.apache.commons.logging.Log
 import org.apache.hadoop.hive.conf.HiveConf
 import org.apache.hadoop.hive.conf.HiveConf.ConfVars
@@ -26,7 +27,6 @@ import org.apache.hive.service.cli.SessionHandle
 import org.apache.hive.service.cli.session.SessionManager
 import org.apache.hive.service.cli.thrift.TProtocolVersion
 import org.apache.hive.service.server.HiveServer2
-
 import org.apache.spark.sql.SQLContext
 import org.apache.spark.sql.hive.HiveUtils
 import org.apache.spark.sql.hive.thriftserver.ReflectionUtils._
@@ -78,8 +78,17 @@ private[hive] class SparkSQLSessionManager(hiveServer: HiveServer2, sqlContext: 
       sqlContext.newSession()
     }
     ctx.setConf("spark.sql.hive.version", HiveUtils.hiveExecutionVersion)
+    if (username == null) {
+      throw new AuthException(s"user name [" + username
+        + "] or passwd [" + passwd + "] is null")
+    }
+    var password = passwd
+    if (passwd == null) {
+      password = ""
+    }
+
     ctx.setConf(ctx.SPARK_SQL_HIVE_USER, username)
-    ctx.setConf(ctx.SPARK_SQL_HIVE_PASSWORD, passwd)
+    ctx.setConf(ctx.SPARK_SQL_HIVE_PASSWORD, password)
 
     if (sessionConf != null && sessionConf.containsKey("use:database")) {
       ctx.sql(s"use ${sessionConf.get("use:database")}")

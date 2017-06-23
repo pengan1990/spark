@@ -6,17 +6,17 @@ And here to record what are changed in spark source code.
 ## catalyst project : spark-catalyst_2.11  
 
 
-### AstBuilder 语法解析
+### AstBuilder Generating Logic Plan
 
 #### class AstBuilder 中增加成员变量
 
-* 增加两个成员变量
+* add two local variables
 ```$xslt
 val schemaTables = mutable.HashMap[String, mutable.ArrayBuffer[String]]()
 val noSchemaTables = mutable.ArrayBuffer[String]()
 ```
 
-* visitTableIdentifier 函数中增加如下代码
+* visitTableIdentifier to store table name
 ```$xslt
     // 获取当前操作的库名和表明
     if (Option(ctx.db).nonEmpty) {
@@ -31,14 +31,14 @@ val noSchemaTables = mutable.ArrayBuffer[String]()
     }
 ```
 
-* visitSingleStatement 作为语法解析入口
+* visitSingleStatement: entrance for SQL parsing
 ```$xslt
     // 清空上一次语法解析留下来的数据 避免污染此次解析数据
     schemaTables.clear()
     noSchemaTables.clear()
 ```
 
-* ParserDriver.scala 文件的 class AbstractSqlParser中 增加函数
+* ParserDriver.scala {class AbstractSqlParser} add two local variables
 ```$xslt
   // 供外部调用tableSchema
   def tableSchema :mutable.HashMap[String, mutable.ArrayBuffer[String]] = astBuilder.schemaTables
@@ -47,11 +47,12 @@ val noSchemaTables = mutable.ArrayBuffer[String]()
 
 ## core project: spark-sql_2.11 
 
-### Dataset 数据集  
+### Dataset   
 
 #### object Dataset 
 
-* ofRows(sparkSession: SparkSession, logicalPlan: LogicalPlan) 函数中增加验证方法 auth(sparkSession) 
+* ofRows(sparkSession: SparkSession, logicalPlan: LogicalPlan) add function: **auth(sparkSession)** 
+using before resolved plan
 
 ```$xslt
   /**

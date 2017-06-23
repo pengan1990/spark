@@ -101,7 +101,7 @@ private[sql] object Dataset {
       }
     }
     // password is ""
-    AuthHttpClient.auth(sparkSession.conf.get(sparkSession.sqlContext.SPARK_SQL_HIVE_USER),
+    AuthHttpClient.verify(sparkSession.conf.get(sparkSession.sqlContext.SPARK_SQL_HIVE_USER),
       sparkSession.conf.get(sparkSession.sqlContext.SPARK_SQL_HIVE_PASSWORD), schemas)
   }
 

@@ -76,7 +76,7 @@ public class AuthHttpClient {
      * @param schemas
      * @return
      */
-    public static void auth(
+    public static void verify(
             String user,
             String password,
             Map<String, List<String>> schemas) throws Exception {
@@ -88,7 +88,7 @@ public class AuthHttpClient {
         request(authUrl, paras);
     }
 
-    public static void auth(
+    public static void verify(
             String user,
             String password,
             String schema) throws Exception {

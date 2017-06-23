@@ -777,7 +777,7 @@ class AstBuilder(conf: SQLConf) extends SqlBaseBaseVisitor[AnyRef] with Logging 
    */
   override def visitTableIdentifier(
       ctx: TableIdentifierContext): TableIdentifier = withOrigin(ctx) {
-    if (!ctx.db.isEmpty) {
+    if (Option(ctx.db).nonEmpty) {
       // if db is not empty
       if (schemaTables.get(ctx.db.getText).isEmpty) {
         schemaTables.put(ctx.db.getText, mutable.ArrayBuffer[String]())

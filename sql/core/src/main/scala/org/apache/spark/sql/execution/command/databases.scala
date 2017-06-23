@@ -17,6 +17,7 @@
 
 package org.apache.spark.sql.execution.command
 
+import com.jd.unibase.auth.client.AuthHttpClient
 import org.apache.spark.sql.{Row, SparkSession}
 import org.apache.spark.sql.catalyst.expressions.{Attribute, AttributeReference}
 import org.apache.spark.sql.types.StringType
@@ -39,10 +40,13 @@ case class ShowDatabasesCommand(databasePattern: Option[String]) extends Runnabl
   }
 
   override def run(sparkSession: SparkSession): Seq[Row] = {
-    val catalog = sparkSession.sessionState.catalog
-    val databases =
-      databasePattern.map(catalog.listDatabases).getOrElse(catalog.listDatabases())
-    databases.map { d => Row(d) }
+    val schemas = AuthHttpClient.showDatabases(sparkSession.conf.get(sparkSession.sqlContext.SPARK_SQL_HIVE_USER),
+      sparkSession.conf.get(sparkSession.sqlContext.SPARK_SQL_HIVE_PASSWORD))
+    schemas.map( schema => Row(schema))
+//    val catalog = sparkSession.sessionState.catalog
+//    val databases =
+//      databasePattern.map(catalog.listDatabases).getOrElse(catalog.listDatabases())
+//    databases.map { d => Row(d) }
   }
 }
 

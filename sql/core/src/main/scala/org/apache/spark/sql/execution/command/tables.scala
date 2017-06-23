@@ -22,13 +22,13 @@ import java.net.URI
 import java.nio.file.FileSystems
 import java.util.Date
 
+import com.jd.unibase.auth.client.AuthHttpClient
+
 import scala.collection.mutable.ArrayBuffer
 import scala.util.control.NonFatal
 import scala.util.Try
-
 import org.apache.commons.lang3.StringEscapeUtils
 import org.apache.hadoop.fs.Path
-
 import org.apache.spark.sql.{AnalysisException, Row, SparkSession}
 import org.apache.spark.sql.catalyst.TableIdentifier
 import org.apache.spark.sql.catalyst.analysis.NoSuchPartitionException
@@ -652,37 +652,46 @@ case class ShowTablesCommand(
   override def run(sparkSession: SparkSession): Seq[Row] = {
     // Since we need to return a Seq of rows, we will call getTables directly
     // instead of calling tables in sparkSession.
-    val catalog = sparkSession.sessionState.catalog
-    val db = databaseName.getOrElse(catalog.getCurrentDatabase)
-    if (partitionSpec.isEmpty) {
-      // Show the information of tables.
-      val tables =
-        tableIdentifierPattern.map(catalog.listTables(db, _)).getOrElse(catalog.listTables(db))
-      tables.map { tableIdent =>
-        val database = tableIdent.database.getOrElse("")
-        val tableName = tableIdent.table
-        val isTemp = catalog.isTemporaryTable(tableIdent)
-        if (isExtended) {
-          val information = catalog.getTempViewOrPermanentTableMetadata(tableIdent).simpleString
-          Row(database, tableName, isTemp, s"$information\n")
-        } else {
-          Row(database, tableName, isTemp)
-        }
-      }
-    } else {
-      // Show the information of partitions.
-      //
-      // Note: tableIdentifierPattern should be non-empty, otherwise a [[ParseException]]
-      // should have been thrown by the sql parser.
-      val tableIdent = TableIdentifier(tableIdentifierPattern.get, Some(db))
-      val table = catalog.getTableMetadata(tableIdent).identifier
-      val partition = catalog.getPartition(tableIdent, partitionSpec.get)
-      val database = table.database.getOrElse("")
-      val tableName = table.table
-      val isTemp = catalog.isTemporaryTable(table)
-      val information = partition.simpleString
-      Seq(Row(database, tableName, isTemp, s"$information\n"))
-    }
+
+    val schema = sparkSession.sessionState.catalog.getCurrentDatabase
+    val tables = AuthHttpClient.showTables(sparkSession.conf.get(sparkSession.sqlContext.SPARK_SQL_HIVE_USER),
+      sparkSession.conf.get(sparkSession.sqlContext.SPARK_SQL_HIVE_PASSWORD),
+      schema)
+    tables.map(table => {
+      Row(schema, table, false)
+    })
+
+//    val catalog = sparkSession.sessionState.catalog
+//    val db = databaseName.getOrElse(catalog.getCurrentDatabase)
+//    if (partitionSpec.isEmpty) {
+//      // Show the information of tables.
+//      val tables =
+//        tableIdentifierPattern.map(catalog.listTables(db, _)).getOrElse(catalog.listTables(db))
+//      tables.map { tableIdent =>
+//        val database = tableIdent.database.getOrElse("")
+//        val tableName = tableIdent.table
+//        val isTemp = catalog.isTemporaryTable(tableIdent)
+//        if (isExtended) {
+//          val information = catalog.getTempViewOrPermanentTableMetadata(tableIdent).simpleString
+//          Row(database, tableName, isTemp, s"$information\n")
+//        } else {
+//          Row(database, tableName, isTemp)
+//        }
+//      }
+//    } else {
+//      // Show the information of partitions.
+//      //
+//      // Note: tableIdentifierPattern should be non-empty, otherwise a [[ParseException]]
+//      // should have been thrown by the sql parser.
+//      val tableIdent = TableIdentifier(tableIdentifierPattern.get, Some(db))
+//      val table = catalog.getTableMetadata(tableIdent).identifier
+//      val partition = catalog.getPartition(tableIdent, partitionSpec.get)
+//      val database = table.database.getOrElse("")
+//      val tableName = table.table
+//      val isTemp = catalog.isTemporaryTable(table)
+//      val information = partition.simpleString
+//      Seq(Row(database, tableName, isTemp, s"$information\n"))
+//    }
   }
 }
 

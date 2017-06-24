@@ -94,7 +94,7 @@ private[sql] object Dataset {
     if (noSchemaTables.nonEmpty) {
       // 当前逻辑库不为空　并且 不带库名表内容也不为空 不用考虑sql 之间的逻辑关系 {没有use db 直接show tables}
       val noTbs:java.util.List[String] = noSchemaTables.asJava
-      if (schemas.get(currDb) == null) {
+      if (Option(schemas.get(currDb)).isEmpty) {
         schemas.put(currDb, noTbs)
       } else {
         schemas.get(currDb).addAll(noTbs)

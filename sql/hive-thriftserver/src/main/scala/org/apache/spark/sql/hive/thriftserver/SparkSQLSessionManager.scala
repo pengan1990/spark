@@ -78,12 +78,12 @@ private[hive] class SparkSQLSessionManager(hiveServer: HiveServer2, sqlContext: 
       sqlContext.newSession()
     }
     ctx.setConf("spark.sql.hive.version", HiveUtils.hiveExecutionVersion)
-    if (username == null) {
+    if (Option(username).isEmpty) {
       throw new AuthException(s"user name [" + username
         + "] or passwd [" + passwd + "] is null")
     }
     var password = passwd
-    if (passwd == null) {
+    if (Option(passwd).isEmpty) {
       password = ""
     }
 

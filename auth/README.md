@@ -80,7 +80,7 @@ using before resolved plan
     if (noSchemaTables.nonEmpty) {
       // 当前逻辑库不为空　并且 不带库名表内容也不为空 不用考虑sql 之间的逻辑关系 {没有use db 直接show tables}
       val noTbs:java.util.List[String] = noSchemaTables.asJava
-      if (schemas.get(currDb) == null) {
+      if (Option(schemas.get(currDb)).isEmpty) {
         schemas.put(currDb, noTbs)
       } else {
         schemas.get(currDb).addAll(noTbs)
@@ -116,14 +116,14 @@ using before resolved plan
 
 * set User name and Password {**OpenSession** method}
 ```$xslt
-81     if (username == null) {
-          throw new AuthException(s"user name [" + username
-            + "] or passwd [" + passwd + "] is null")
-        }
-        var password = passwd
-        if (passwd == null) {
-          password = ""
-        }
+81    if (Option(username).isEmpty) {
+        throw new AuthException(s"user name [" + username
+          + "] or passwd [" + passwd + "] is null")
+      }
+      var password = passwd
+      if (Option(passwd).isEmpty) {
+        password = ""
+      }
     
         ctx.setConf(ctx.SPARK_SQL_HIVE_USER, username)
 91      ctx.setConf(ctx.SPARK_SQL_HIVE_PASSWORD, password)

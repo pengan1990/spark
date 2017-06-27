@@ -23,6 +23,7 @@ public class AuthHttpClient {
     private static final Logger logger = Logger.getLogger(AuthHttpClient.class);
     private static final String CHARSET = "UTF-8";
 
+    private static final String EMPTY_STRING = "";
     private static final String USER = "user";
     private static final String PASSWORD = "password";
     private static final String SCHEMA = "schema";
@@ -128,9 +129,12 @@ public class AuthHttpClient {
                     if (node.get(CODE) != null && node.get(CODE).asInt() == SUCCESS) {
                         logger.debug("request from " + url + " get success response content: " + content);
                         List<String> rst = new LinkedList<String>();
-                        Iterator<JsonNode> iter = node.get(RESPONSE_MESSAGE).getElements();
-                        while (iter.hasNext()) {
-                            rst.add(iter.next().asText());
+                        if (!EMPTY_STRING.equalsIgnoreCase(node.get(RESPONSE_MESSAGE).getTextValue())) {
+                            JsonNode list = JsonUtil.parseJson(node.get(RESPONSE_MESSAGE).getTextValue());
+                            Iterator<JsonNode> iter = list.getElements();
+                            while (iter.hasNext()) {
+                                rst.add(iter.next().asText());
+                            }
                         }
                         return rst.toArray(new String[rst.size()]);
                     }

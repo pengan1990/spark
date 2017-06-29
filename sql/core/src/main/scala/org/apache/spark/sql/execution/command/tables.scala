@@ -674,7 +674,7 @@ case class ShowTablesCommand(
         val database = tableIdent.database.getOrElse("")
         val tableName = tableIdent.table
         val isTemp = catalog.isTemporaryTable(tableIdent)
-        if (authTables.contains(tableName)) {
+        if (authTables.contains(tableName.toUpperCase())) {
           retTables += Row(database, tableName, isTemp)
         }
 //        if (isExtended) {
@@ -697,7 +697,7 @@ case class ShowTablesCommand(
       val isTemp = catalog.isTemporaryTable(table)
       val information = partition.simpleString
       Seq(Row(database, tableName, isTemp, s"$information\n"))
-      if (authTables.contains(tableName)) {
+      if (authTables.contains(tableName.toUpperCase())) {
         retTables += Row(database, tableName, isTemp, s"$information\n")
       }
     }

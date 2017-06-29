@@ -22,6 +22,8 @@ import org.apache.spark.sql.{Row, SparkSession}
 import org.apache.spark.sql.catalyst.expressions.{Attribute, AttributeReference}
 import org.apache.spark.sql.types.StringType
 
+import scala.collection.mutable
+
 
 /**
  * A command for users to list the databases/schemas.
@@ -40,13 +42,20 @@ case class ShowDatabasesCommand(databasePattern: Option[String]) extends Runnabl
   }
 
   override def run(sparkSession: SparkSession): Seq[Row] = {
-    val schemas = AuthHttpClient.showDatabases(sparkSession.conf.get(sparkSession.sqlContext.SPARK_SQL_HIVE_USER),
+    val authSchemas = AuthHttpClient.showDatabases(sparkSession.conf.get(sparkSession.sqlContext.SPARK_SQL_HIVE_USER),
       sparkSession.conf.get(sparkSession.sqlContext.SPARK_SQL_HIVE_PASSWORD))
-    schemas.map( schema => Row(schema))
-//    val catalog = sparkSession.sessionState.catalog
-//    val databases =
-//      databasePattern.map(catalog.listDatabases).getOrElse(catalog.listDatabases())
-//    databases.map { d => Row(d) }
+    authSchemas.map( schema => Row(schema))
+    val retSchemas = mutable.ArrayBuffer[Row]()
+    val catalog = sparkSession.sessionState.catalog
+    val databases =
+      databasePattern.map(catalog.listDatabases).getOrElse(catalog.listDatabases())
+    databases.map { d => {
+      if (authSchemas.contains(d)) {
+        retSchemas += Row(d)
+      }
+    }
+    }
+    retSchemas
   }
 }
 

@@ -229,6 +229,11 @@ private[hive] class SparkExecuteStatementOperation(
     }
     try {
       result = sqlContext.sql(statement)
+      result.rdd.map(
+        f => {
+          logDebug("SparkExecuteStatementOperation result rdd :" + f)
+        }
+      )
       logDebug(result.queryExecution.toString())
       result.queryExecution.logical match {
         case SetCommand(Some((SQLConf.THRIFTSERVER_POOL.key, Some(value)))) =>

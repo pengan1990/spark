@@ -128,12 +128,12 @@ public class AuthHttpClient {
                     JsonNode node = JsonUtil.parseJson(content);
                     if (node.get(CODE) != null && node.get(CODE).asInt() == SUCCESS) {
                         logger.debug("request from " + url + " get success response content: " + content);
-                        List<String> rst = new LinkedList<String>();
+                        Set<String> rst = new LinkedHashSet<String>();
                         if (!EMPTY_STRING.equalsIgnoreCase(node.get(RESPONSE_MESSAGE).getTextValue())) {
                             JsonNode list = JsonUtil.parseJson(node.get(RESPONSE_MESSAGE).getTextValue());
                             Iterator<JsonNode> iter = list.getElements();
                             while (iter.hasNext()) {
-                                rst.add(iter.next().asText());
+                                rst.add(iter.next().asText().toUpperCase());
                             }
                         }
                         return rst.toArray(new String[rst.size()]);

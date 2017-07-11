@@ -75,6 +75,9 @@ private[sql] object Dataset {
     * @param sparkSession
     */
   def auth(sparkSession: SparkSession): Unit = {
+    if (!AuthHttpClient.isAuthOpen) {
+      return
+    }
     /**
       * 获取当前库信息
       */

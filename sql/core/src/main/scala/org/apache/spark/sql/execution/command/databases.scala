@@ -50,7 +50,9 @@ case class ShowDatabasesCommand(databasePattern: Option[String]) extends Runnabl
     val databases =
       databasePattern.map(catalog.listDatabases).getOrElse(catalog.listDatabases())
     databases.map { d => {
-      if (authSchemas.contains(d.toUpperCase())) {
+      if (AuthHttpClient.isAuthOpen && authSchemas.contains(d.toUpperCase())) {
+          retSchemas += Row(d)
+      } else {
         retSchemas += Row(d)
       }
     }

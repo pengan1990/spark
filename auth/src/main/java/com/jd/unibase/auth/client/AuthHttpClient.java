@@ -45,6 +45,7 @@ public class AuthHttpClient {
     private static String showDatabaseUrl;
     private static String showTablesUrl;
     private static String showColumnsUrl;
+    private static boolean isAuthOpen;
 
     public static void init() {
         InputStream inputStream = AuthHttpClient.class.getResourceAsStream("/auth.properties");
@@ -63,6 +64,10 @@ public class AuthHttpClient {
             showColumnsUrl = properties.getProperty("spark.thrift.server.auth.show.columns.url",
                     DEFAULT_SHOW_COLUMNS_URL).trim();
             logger.info("show columns url [" + showColumnsUrl + "]");
+
+            isAuthOpen = Boolean.parseBoolean(properties.getProperty("spark.thrift.server.auth.isOpen",
+                    "false").trim());
+            logger.info("auth open switch [" + isAuthOpen + "]");
 
         } catch (IOException e) {
             logger.error("load input stream error : " + e.getLocalizedMessage());
@@ -109,6 +114,9 @@ public class AuthHttpClient {
     private static String[] request(
             String url,
             String paras) throws Exception {
+        if (!isAuthOpen) {
+            return new String[0];
+        }
         CloseableHttpClient httpclient = HttpClients.createDefault();
         HttpPost httppost = new HttpPost(url);
 
@@ -198,5 +206,9 @@ public class AuthHttpClient {
                                           String table, String... columns) {
         logger.debug("haveColumnRight");
         return false;
+    }
+
+    public static boolean isAuthOpen() {
+        return isAuthOpen;
     }
 }

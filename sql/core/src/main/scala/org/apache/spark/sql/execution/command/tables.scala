@@ -659,9 +659,6 @@ case class ShowTablesCommand(
     val authTables = AuthHttpClient.showTables(sparkSession.conf.get(sparkSession.sqlContext.SPARK_SQL_HIVE_USER),
       sparkSession.conf.get(sparkSession.sqlContext.SPARK_SQL_HIVE_PASSWORD),
       schema)
-//    tables.map(table => {
-//      Row(schema, table, false)
-//    })
 
     val retTables = mutable.ArrayBuffer[Row]()
     val catalog = sparkSession.sessionState.catalog
@@ -674,15 +671,16 @@ case class ShowTablesCommand(
         val database = tableIdent.database.getOrElse("")
         val tableName = tableIdent.table
         val isTemp = catalog.isTemporaryTable(tableIdent)
-        if (authTables.contains(tableName.toUpperCase())) {
-          retTables += Row(database, tableName, isTemp)
+        if (AuthHttpClient.isAuthOpen && authTables.contains(tableName.toUpperCase())) {
+            retTables += Row(database, tableName, isTemp)
+        } else {
+          if (isExtended) {
+            val information = catalog.getTempViewOrPermanentTableMetadata(tableIdent).simpleString
+            retTables += Row(database, tableName, isTemp, s"$information\n")
+          } else {
+            retTables += Row(database, tableName, isTemp)
+          }
         }
-//        if (isExtended) {
-//          val information = catalog.getTempViewOrPermanentTableMetadata(tableIdent).simpleString
-//          Row(database, tableName, isTemp, s"$information\n")
-//        } else {
-//          Row(database, tableName, isTemp)
-//        }
       }
     } else {
       // Show the information of partitions.
@@ -697,7 +695,10 @@ case class ShowTablesCommand(
       val isTemp = catalog.isTemporaryTable(table)
       val information = partition.simpleString
       Seq(Row(database, tableName, isTemp, s"$information\n"))
-      if (authTables.contains(tableName.toUpperCase())) {
+
+      if (AuthHttpClient.isAuthOpen && authTables.contains(tableName.toUpperCase())) {
+          retTables += Row(database, tableName, isTemp, s"$information\n")
+      } else {
         retTables += Row(database, tableName, isTemp, s"$information\n")
       }
     }

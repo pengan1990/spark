@@ -671,8 +671,10 @@ case class ShowTablesCommand(
         val database = tableIdent.database.getOrElse("")
         val tableName = tableIdent.table
         val isTemp = catalog.isTemporaryTable(tableIdent)
-        if (AuthHttpClient.isAuthOpen && authTables.contains(tableName.toUpperCase())) {
+        if (AuthHttpClient.isAuthOpen ) {
+          if (authTables.contains(tableName.toUpperCase())) {
             retTables += Row(database, tableName, isTemp)
+          }
         } else {
           if (isExtended) {
             val information = catalog.getTempViewOrPermanentTableMetadata(tableIdent).simpleString
@@ -695,9 +697,10 @@ case class ShowTablesCommand(
       val isTemp = catalog.isTemporaryTable(table)
       val information = partition.simpleString
       Seq(Row(database, tableName, isTemp, s"$information\n"))
-
-      if (AuthHttpClient.isAuthOpen && authTables.contains(tableName.toUpperCase())) {
+      if (AuthHttpClient.isAuthOpen) {
+        if (authTables.contains(tableName.toUpperCase())) {
           retTables += Row(database, tableName, isTemp, s"$information\n")
+        }
       } else {
         retTables += Row(database, tableName, isTemp, s"$information\n")
       }
